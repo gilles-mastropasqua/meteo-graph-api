@@ -1,0 +1,1138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+generator pothos {
+  provider = "prisma-pothos-types"
+}
+
+generator pothosCrud {
+  provider            = "prisma-generator-pothos-codegen"
+  generatorConfigPath = "./pothos.config.js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Represents a meteorological observation station.
+///
+/// This model stores metadata about Météo-France observation stations, including their location,
+/// altitude, operational status, and identifiers.
+///
+/// - The dataset is updated once per day by retrieving data from the dataset: [Données des postes d'observation](https://meteo.data.gouv.fr/datasets/656dab84db1bdf627a40eaae).
+/// - Source of the station data: [POSTES_MF.csv](https://object.files.data.gouv.fr/meteofrance/data/synchro_ftp/BASE/POSTES/POSTES_MF.csv)
+///
+model Poste {
+  /// Unique Météo-France station number (8 digits).
+  numPoste        String               @id @unique @db.Char(8)
+  /// Commonly used name of the station.
+  nomUsuel        String
+  /// Name of the municipality where the station is located.
+  commune         String
+  /// Specific place or locality where the station is situated.
+  lieuDit         String?
+  /// Indicates whether the station is currently open.
+  posteOuvert     Boolean              @default(false)
+  /// Altitude of the observation shelter or the rain gauge if no shelter (in meters).
+  alti            Int?
+  /// Date when the station was closed (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ).
+  datferm         DateTime?
+  /// Date when the station was opened (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ).
+  datouvr         DateTime?
+  /// Lambert X coordinate in hectometers, computed from latitude and longitude.
+  lambx           Int?
+  /// Lambert Y coordinate in hectometers, computed from latitude and longitude.
+  lamby           Int?
+  /// Latitude of the station, negative in the southern hemisphere (in degrees and millionths of a degree).
+  lat             Float
+  /// Longitude of the station, negative west of Greenwich (in degrees and millionths of a degree).
+  lon             Float
+  /// Type of station according to its data acquisition and processing method.
+  /// - `0` = Synoptic station, real-time acquisition, expertise at D+1
+  /// - `1` = Automatic Radome-Resome station, real-time acquisition, expertise at D+1
+  /// - `2` = Non-Radome-Resome automatic station, real-time acquisition, expertise at D+1
+  /// - `3` = Automatic station, real-time acquisition, delayed expertise (up to M+21 days)
+  /// - `4` = Manual climatological station or automatic station, delayed acquisition, delayed expertise (up to M+21 days)
+  /// - `5` = Station with real-time or delayed acquisition, non-expertised or data expertise not guaranteed
+  typePosteActuel Int?
+  observations    ObservationHoraire[]
+
+  @@index([posteOuvert])
+}
+
+/// Represents an hourly meteorological observation.
+///
+/// This model stores meteorological observations collected from Météo-France stations.
+/// It includes temperature, humidity, wind, precipitation, and other atmospheric parameters.
+///
+/// - Quality codes are provided for most fields to indicate data reliability.
+/// - Some fields have corresponding coded values that map to specific meteorological conditions.
+/// - The dataset is updated once per day at 07:00 UTC by retrieving data from the dataset: [Données climatologiques de base - horaires](https://meteo.data.gouv.fr/datasets/6569b4473bedf2e7abad3b72).
+/// - Source of the documentation: [Météo-France Descriptive Fields](https://donneespubliques.meteofrance.fr/client/document/h_descriptif_champs_316.csv)
+///
+model ObservationHoraire {
+  /// Date and time of the observation (ISO 8601 format: YYYY-MM-DDTHH:mm:ss.sssZ).
+  dateObservation DateTime
+
+  /// Unique Météo-France station number (8 digits).
+  numPoste String @db.Char(8)
+
+  /// Precipitation amount over 1 hour (in mm and 1/10 mm).
+  rr1 String?
+
+  /// Duration of the precipitation (in minutes).
+  drr1 String?
+
+  /// Height of the fresh snow (in cm).
+  hneigef String?
+
+  /// Total snow depth (in cm).
+  neigetot String?
+
+  /// Air temperature at the time of observation (in °C).
+  t Float?
+
+  /// Dew point temperature (in °C).
+  td String?
+
+  /// Minimum humidity recorded (in %).
+  htn String?
+
+  /// Maximum humidity recorded (in %).
+  htx String?
+
+  /// Wind direction (in degrees, from 0 to 360).
+  dg String?
+
+  /// Temperature at 10 cm above the ground (in °C).
+  t10 String?
+
+  /// Temperature at 20 cm above the ground (in °C).
+  t20 String?
+
+  /// Temperature at 50 cm above the ground (in °C).
+  t50 String?
+
+  /// Temperature at 100 cm above the ground (in °C).
+  t100 String?
+
+  /// Road surface temperature (in °C).
+  tchaussee String?
+
+  /// Atmospheric pressure at station level (in hPa).
+  pstat String?
+
+  /// Atmospheric pressure at mean sea level (in hPa).
+  pmer Float?
+
+  /// Geopotential height (in gpm).
+  geop String?
+
+  /// Minimum atmospheric pressure at sea level (in hPa).
+  pmermin String?
+
+  /// Average wind speed over 10 minutes, measured at 10 m above ground (in m/s and 1/10).
+  ff String?
+
+  /// Wind direction (in degrees, from 0 to 360).
+  dd String?
+
+  /// Maximum wind speed recorded in 10 minutes (in m/s and 1/10).
+  fxi String?
+
+  /// Direction of maximum wind speed (in degrees, from 0 to 360).
+  dxi String?
+
+  /// Hour of maximum wind speed recorded.
+  hxi String?
+
+  /// Second highest wind speed recorded (in m/s and 1/10).
+  fxy String?
+
+  /// Direction of second highest wind speed (in degrees, from 0 to 360).
+  dxy String?
+
+  /// Hour of second highest wind speed recorded.
+  hxy String?
+
+  /// Total cloud cover (in oktas, from 0 to 8).
+  n String?
+
+  /// Cloud cover of the lowest layer (in oktas, from 0 to 8).
+  nbas String?
+
+  /// Low cloud type (WMO classification).
+  cl String?
+
+  /// Medium cloud type (WMO classification).
+  cm String?
+
+  /// High cloud type (WMO classification).
+  ch String?
+
+  /// Cloud cover in first level (in oktas, from 0 to 8).
+  c1 String?
+
+  /// Cloud cover in second level (in oktas, from 0 to 8).
+  c2 String?
+
+  /// Cloud cover in third level (in oktas, from 0 to 8).
+  c3 String?
+
+  /// Cloud cover in fourth level (in oktas, from 0 to 8).
+  c4 String?
+
+  /// Horizontal visibility (in meters).
+  vv String?
+
+  /// Present weather conditions (WMO code).
+  ww String?
+
+  /// Soil condition (WMO classification).
+  sol String?
+
+  /// State of the ground without snow (WMO classification).
+  solng String?
+
+  /// UV index at the time of observation.
+  uvIndice String?
+
+  /// Altitude of the observation point (in meters).
+  alti Int?
+
+  /// Atmospheric brightness parameter 1.
+  b1 String?
+
+  /// Atmospheric brightness parameter 2.
+  b2 String?
+
+  /// Atmospheric brightness parameter 3.
+  b3 String?
+
+  /// Atmospheric brightness parameter 4.
+  b4 String?
+
+  /// Snow load estimation.
+  chargeneige String?
+
+  /// Secondary wind direction (in degrees, from 0 to 360).
+  dd2 String?
+
+  /// Soil moisture depth category C.
+  dhumec String?
+
+  /// Soil moisture at 40 cm depth.
+  dhumi40 String?
+
+  /// Soil moisture at 80 cm depth.
+  dhumi80 String?
+
+  /// Difference between two temperature or pressure measurements.
+  dif String?
+
+  /// Secondary difference between two measurements.
+  dif2 String?
+
+  /// General wind direction.
+  dir String?
+
+  /// Secondary general wind direction.
+  dir2 String?
+
+  /// Swell direction (in degrees, from 0 to 360).
+  dirhoule String?
+
+  /// Wind speed variation at 200m altitude.
+  dvv200 String?
+
+  /// Secondary direction of maximum wind speed.
+  dxi2 String?
+
+  /// Water flow estimation.
+  ecoulement String?
+
+  /// Snow water equivalent.
+  esneige String?
+
+  /// Sea state classification (WMO scale).
+  etatmer String?
+
+  /// Secondary wind speed average over 10 minutes.
+  ff2 String?
+
+  /// Secondary maximum wind speed recorded.
+  fxi2 String?
+
+  /// Global radiation measurement.
+  glo String?
+
+  /// Secondary global radiation measurement.
+  glo2 String?
+
+  /// Snow height at first fixed interval.
+  hneigefi1 String?
+
+  /// Snow height at third fixed interval.
+  hneigefi3 String?
+
+  /// Minimum humidity recorded during the observation period (in %).
+  hun String?
+
+  /// Maximum humidity recorded during the observation period (in %).
+  hux String?
+
+  /// Significant wave height (in meters).
+  hvague String?
+
+  /// Secondary hour of maximum wind speed recorded.
+  hxi2 String?
+
+  /// Infrared radiation measurement.
+  infrar String?
+
+  /// Secondary infrared radiation measurement.
+  infrar2 String?
+
+  /// Global solar radiation in the second interval.
+  ins2 String?
+
+  /// Latitude of the observation point (in decimal degrees).
+  lat String?
+
+  /// Longitude of the observation point (in decimal degrees).
+  lon String?
+
+  /// Cloud cover at first level (in oktas, from 0 to 8).
+  n1 String?
+
+  /// Cloud cover at second level (in oktas, from 0 to 8).
+  n2 String?
+
+  /// Cloud cover at third level (in oktas, from 0 to 8).
+  n3 String?
+
+  /// Cloud cover at fourth level (in oktas, from 0 to 8).
+  n4 String?
+
+  /// Commonly used name of the observation station.
+  nomUsuel String?
+
+  /// Peak wave period (in seconds).
+  pvague String?
+
+  /// Lagoon water temperature (in °C).
+  tlagon String?
+
+  /// Sea surface temperature (in °C).
+  tmer String?
+
+  /// Temperature of the snow surface (in °C).
+  tsneige String?
+
+  /// Surface temperature variation.
+  tsv String?
+
+  /// Temperature of vegetation surfaces (in °C).
+  tvegetaux String?
+
+  /// Relative humidity at the observation point (in %).
+  u String?
+
+  /// Minimum relative humidity recorded (in %).
+  un String?
+
+  /// Ultraviolet radiation index.
+  uv String?
+
+  /// Secondary ultraviolet radiation index.
+  uv2 String?
+
+  /// Maximum relative humidity recorded (in %).
+  ux String?
+
+  /// Horizontal visibility over the sea (in meters).
+  vvmer String?
+
+  /// Weather phenomenon code 1 (WMO classification).
+  w1 String?
+
+  /// Weather phenomenon code 2 (WMO classification).
+  w2 String?
+
+  /// Date and time of the measurement (YYYYMMDDHH format).
+  aaaammjjhh Int?
+
+  /// Quality indicator for atmospheric brightness parameter 1.
+  qb1 String?
+
+  /// Quality indicator for atmospheric brightness parameter 2.
+  qb2 String?
+
+  /// Quality indicator for atmospheric brightness parameter 3.
+  qb3 String?
+
+  /// Quality indicator for atmospheric brightness parameter 4.
+  qb4 String?
+
+  /// Quality indicator for cloud cover at first level.
+  qc1 String?
+
+  /// Quality indicator for cloud cover at second level.
+  qc2 String?
+
+  /// Quality indicator for cloud cover at third level.
+  qc3 String?
+
+  /// Quality indicator for cloud cover at fourth level.
+  qc4 String?
+
+  /// Quality indicator for high cloud type.
+  qch String?
+
+  /// Quality indicator for snow load estimation.
+  qchargeneige String?
+
+  /// Quality indicator for low cloud type.
+  qcl String?
+
+  /// Quality indicator for medium cloud type.
+  qcm String?
+
+  /// Quality indicator for wind direction.
+  qdd String?
+
+  /// Quality indicator for secondary wind direction.
+  qdd2 String?
+
+  /// Quality indicator for general wind direction.
+  qdg String?
+
+  /// Quality indicator for soil moisture at category C depth.
+  qdhumec String?
+
+  /// Quality indicator for soil moisture at 40 cm depth.
+  qdhumi40 String?
+
+  /// Quality indicator for soil moisture at 80 cm depth.
+  qdhumi80 String?
+
+  /// Quality indicator for difference between two temperature or pressure measurements.
+  qdif String?
+
+  /// Quality indicator for secondary difference between two measurements.
+  qdif2 String?
+
+  /// Quality indicator for general wind direction.
+  qdir String?
+
+  /// Quality indicator for secondary general wind direction.
+  qdir2 String?
+
+  /// Quality indicator for swell direction.
+  qdirhoule String?
+
+  /// Quality indicator for precipitation amount over 1 hour.
+  qdrr1 String?
+
+  /// Quality indicator for wind speed variation at 200m altitude.
+  qdvv200 String?
+
+  /// Quality indicator for maximum wind speed direction.
+  qdxi String?
+
+  /// Quality indicator for secondary maximum wind speed direction.
+  qdxi2 String?
+
+  /// Quality indicator for second highest wind speed direction.
+  qdxy String?
+
+  /// Quality indicator for water flow estimation.
+  qecoulement String?
+
+  /// Quality indicator for snow water equivalent.
+  qesneige String?
+
+  /// Quality indicator for sea state classification.
+  qetatmer String?
+
+  /// Quality indicator for average wind speed over 10 minutes.
+  qff String?
+
+  /// Quality indicator for secondary average wind speed over 10 minutes.
+  qff2 String?
+
+  /// Quality indicator for maximum wind speed recorded.
+  qfxi String?
+
+  /// Quality indicator for secondary maximum wind speed recorded.
+  qfxi2 String?
+
+  /// Quality indicator for second highest wind speed recorded.
+  qfxy String?
+
+  /// Quality indicator for geopotential height.
+  qgeop String?
+
+  /// Quality indicator for global radiation measurement.
+  qglo String?
+
+  /// Quality indicator for secondary global radiation measurement.
+  qglo2 String?
+
+  /// Quality indicator for fresh snow height.
+  qhneigef String?
+
+  /// Quality indicator for snow height at first fixed interval.
+  qhneigefi1 String?
+
+  /// Quality indicator for snow height at third fixed interval.
+  qhneigefi3 String?
+
+  /// Quality indicator for minimum humidity recorded.
+  qhtn String?
+
+  /// Quality indicator for maximum humidity recorded.
+  qhtx String?
+
+  /// Quality indicator for minimum relative humidity.
+  qhun String?
+
+  /// Quality indicator for maximum relative humidity.
+  qhux String?
+
+  /// Quality indicator for significant wave height.
+  qhvague String?
+
+  /// Quality indicator for maximum wind speed hour.
+  qhxi String?
+
+  /// Quality indicator for secondary maximum wind speed hour.
+  qhxi2 String?
+
+  /// Quality indicator for second highest wind speed hour.
+  qhxy String?
+
+  /// Quality indicator for infrared radiation measurement.
+  qinfrar String?
+
+  /// Quality indicator for secondary infrared radiation measurement.
+  qinfrar2 String?
+
+  /// Quality indicator for global solar radiation.
+  qins String?
+
+  /// Quality indicator for secondary global solar radiation.
+  qins2 String?
+
+  /// Quality indicator for total cloud cover.
+  qn String?
+
+  /// Quality indicator for cloud cover at first level.
+  qn1 String?
+
+  /// Quality indicator for cloud cover at second level.
+  qn2 String?
+
+  /// Quality indicator for cloud cover at third level.
+  qn3 String?
+
+  /// Quality indicator for cloud cover at fourth level.
+  qn4 String?
+
+  /// Quality indicator for cloud cover of the lowest layer.
+  qnbas String?
+
+  /// Quality indicator for total snow depth.
+  qneigetot String?
+
+  /// Quality indicator for atmospheric pressure at mean sea level.
+  qpmer Int?
+
+  /// Quality indicator for minimum atmospheric pressure at sea level.
+  qpmermin String?
+
+  /// Quality indicator for atmospheric pressure at station level.
+  qpstat Int?
+
+  /// Quality indicator for peak wave period.
+  qpvague String?
+
+  /// Quality indicator for precipitation amount over 1 hour.
+  qrr1 String?
+
+  /// Quality indicator for soil condition.
+  qsol String?
+
+  /// Quality indicator for ground state without snow.
+  qsolng String?
+
+  /// Quality indicator for air temperature at the time of observation.
+  qt Int?
+
+  /// Quality indicator for temperature at 10 cm above the ground.
+  qt10 String?
+
+  /// Quality indicator for temperature at 100 cm above the ground.
+  qt100 String?
+
+  /// Quality indicator for temperature at 20 cm above the ground.
+  qt20 String?
+
+  /// Quality indicator for temperature at 50 cm above the ground.
+  qt50 String?
+
+  /// Quality indicator for road surface temperature.
+  qtchaussee String?
+
+  /// Quality indicator for dew point temperature.
+  qtd String?
+
+  /// Quality indicator for lagoon water temperature.
+  qtlagon String?
+
+  /// Quality indicator for sea surface temperature.
+  qtmer String?
+
+  /// Quality indicator for minimum temperature recorded.
+  qtn String?
+
+  /// Quality indicator for minimum temperature recorded at 50 cm depth.
+  qtn50 String?
+
+  /// Quality indicator for minimum ground temperature.
+  qtnsol String?
+
+  /// Quality indicator for snow surface temperature.
+  qtsneige String?
+
+  /// Quality indicator for surface temperature variation.
+  qtsv String?
+
+  /// Quality indicator for snow tube temperature.
+  qtubeneige String?
+
+  /// Quality indicator for vegetation temperature.
+  qtvegetaux String?
+
+  /// Quality indicator for maximum temperature recorded.
+  qtx String?
+
+  /// Quality indicator for relative humidity.
+  qu String?
+
+  /// Quality indicator for minimum relative humidity recorded.
+  qun String?
+
+  /// Quality indicator for ultraviolet radiation index.
+  quv String?
+
+  /// Quality indicator for secondary ultraviolet radiation index.
+  quv2 String?
+
+  /// Quality indicator for UV index at the time of observation.
+  quvIndice String?
+
+  /// Quality indicator for maximum relative humidity recorded.
+  qux String?
+
+  /// Quality indicator for horizontal visibility.
+  qvv String?
+
+  /// Quality indicator for horizontal visibility over the sea.
+  qvvmer String?
+
+  /// Quality indicator for weather phenomenon code 1.
+  qw1 String?
+
+  /// Quality indicator for weather phenomenon code 2.
+  qw2 String?
+
+  /// Quality indicator for present weather conditions.
+  qww String?
+
+  /// Minimum temperature recorded.
+  tn String?
+
+  /// Minimum temperature recorded at 50 cm depth.
+  tn50 String?
+
+  /// Minimum ground temperature.
+  tnsol String?
+
+  /// Snow tube temperature.
+  tubeneige String?
+
+  /// Maximum temperature recorded.
+  tx String?
+
+  /// Direction of third highest wind speed recorded.
+  dxi3S String?
+
+  /// Third highest wind speed recorded.
+  fxi3S String?
+
+  /// Hour of third highest wind speed recorded.
+  hfxi3S String?
+
+  /// Quality indicator for direction of third highest wind speed recorded.
+  qdxi3S String?
+
+  /// Quality indicator for third highest wind speed recorded.
+  qfxi3S String?
+
+  /// Quality indicator for hour of third highest wind speed recorded.
+  qhfxi3S String?
+
+  /// Global solar radiation measurement.
+  ins String?
+
+  /// Relationship with the `Poste` model based on the station number.
+  poste Poste @relation(fields: [numPoste], references: [numPoste])
+
+  @@id([numPoste, dateObservation])
+  @@index([numPoste])
+  @@index([dateObservation])
+}
+
+// model ObservationHoraire {
+//   dateObservation DateTime
+//   numPoste        String   @db.Char(8)
+//   rr1             String?
+//   drr1            String?
+//   hneigef         String?
+//   neigetot        String?
+//   t               Float?
+//   td              String?
+//   htn             String?
+//   htx             String?
+//   dg              String?
+//   t10             String?
+//   t20             String?
+//   t50             String?
+//   t100            String?
+//   tchaussee       String?
+//   pstat           String?
+//   pmer            Float?
+//   geop            String?
+//   pmermin         String?
+//   ff              String?
+//   dd           String?
+//   fxi          String?
+//   dxi          String?
+//   hxi          String?
+//   fxy          String?
+//   dxy          String?
+//   hxy          String?
+//   n            String?
+//   nbas         String?
+//   cl           String?
+//   cm           String?
+//   ch           String?
+//   c1           String?
+//   c2           String?
+//   c3           String?
+//   c4           String?
+//   vv           String?
+//   ww           String?
+//   sol          String?
+//   solng        String?
+//   uvIndice     String?
+//   alti         Int?
+//   b1           String?
+//   b2           String?
+//   b3           String?
+//   b4           String?
+//   chargeneige  String?
+//   dd2          String?
+//   dhumec       String?
+//   dhumi40      String?
+//   dhumi80      String?
+//   dif          String?
+//   dif2         String?
+//   dir          String?
+//   dir2         String?
+//   dirhoule     String?
+//   dvv200       String?
+//   dxi2         String?
+//   ecoulement   String?
+//   esneige      String?
+//   etatmer      String?
+//   ff2          String?
+//   fxi2         String?
+//   glo          String?
+//   glo2         String?
+//   hneigefi1    String?
+//   hneigefi3    String?
+//   hun          String?
+//   hux          String?
+//   hvague       String?
+//   hxi2         String?
+//   infrar       String?
+//   infrar2      String?
+//   ins2         String?
+//   lat          String?
+//   lon          String?
+//   n1           String?
+//   n2           String?
+//   n3           String?
+//   n4           String?
+//   nomUsuel     String?
+//   pvague       String?
+//   tlagon       String?
+//   tmer         String?
+//   tsneige      String?
+//   tsv          String?
+//   tvegetaux    String?
+//   u            String?
+//   un           String?
+//   uv           String?
+//   uv2          String?
+//   ux           String?
+//   vvmer        String?
+//   w1           String?
+//   w2           String?
+//   aaaammjjhh   Int?
+//   qb1          String?
+//   qb2          String?
+//   qb3          String?
+//   qb4          String?
+//   qc1          String?
+//   qc2          String?
+//   qc3          String?
+//   qc4          String?
+//   qch          String?
+//   qchargeneige String?
+//   qcl          String?
+//   qcm          String?
+//   qdd          String?
+//   qdd2         String?
+//   qdg          String?
+//   qdhumec      String?
+//   qdhumi40     String?
+//   qdhumi80     String?
+//   qdif         String?
+//   qdif2        String?
+//   qdir         String?
+//   qdir2        String?
+//   qdirhoule    String?
+//   qdrr1        String?
+//   qdvv200      String?
+//   qdxi         String?
+//   qdxi2        String?
+//   qdxy         String?
+//   qecoulement  String?
+//   qesneige     String?
+//   qetatmer     String?
+//   qff          String?
+//   qff2         String?
+//   qfxi         String?
+//   qfxi2        String?
+//   qfxy         String?
+//   qgeop        String?
+//   qglo         String?
+//   qglo2        String?
+//   qhneigef     String?
+//   qhneigefi1   String?
+//   qhneigefi3   String?
+//   qhtn         String?
+//   qhtx         String?
+//   qhun         String?
+//   qhux         String?
+//   qhvague      String?
+//   qhxi         String?
+//   qhxi2        String?
+//   qhxy         String?
+//   qinfrar      String?
+//   qinfrar2     String?
+//   qins         String?
+//   qins2        String?
+//   qn           String?
+//   qn1          String?
+//   qn2          String?
+//   qn3          String?
+//   qn4          String?
+//   qnbas        String?
+//   qneigetot    String?
+//   qpmer        Int?
+//   qpmermin     String?
+//   qpstat       Int?
+//   qpvague      String?
+//   qrr1         String?
+//   qsol         String?
+//   qsolng       String?
+//   qt           Int?
+//   qt10         String?
+//   qt100        String?
+//   qt20         String?
+//   qt50         String?
+//   qtchaussee   String?
+//   qtd          String?
+//   qtlagon      String?
+//   qtmer        String?
+//   qtn          String?
+//   qtn50        String?
+//   qtnsol       String?
+//   qtsneige     String?
+//   qtsv         String?
+//   qtubeneige   String?
+//   qtvegetaux   String?
+//   qtx          String?
+//   qu           String?
+//   qun          String?
+//   quv          String?
+//   quv2         String?
+//   quvIndice    String?
+//   qux          String?
+//   qvv          String?
+//   qvvmer       String?
+//   qw1          String?
+//   qw2          String?
+//   qww          String?
+//   tn           String?
+//   tn50         String?
+//   tnsol        String?
+//   tubeneige    String?
+//   tx           String?
+//   dxi3S        String?
+//   fxi3S        String?
+//   hfxi3S       String?
+//   qdxi3S       String?
+//   qfxi3S       String?
+//   qhfxi3S      String?
+//   ins          String?
+//   poste        Poste   @relation(fields: [numPoste], references: [numPoste])
+//
+//   @@id([numPoste, dateObservation])
+//   @@index([numPoste])
+//   @@index([dateObservation])
+// }
+
+model staging_observations {
+  dateObservation DateTime?
+  numPoste        String?   @db.Char(8)
+  rr1             String?
+  drr1            String?
+  hneigef         String?
+  neigetot        String?
+  t               Float?
+  td              String?
+  htn             String?
+  htx             String?
+  dg              String?
+  t10             String?
+  t20             String?
+  t50             String?
+  t100            String?
+  tchaussee       String?
+  pstat           String?
+  pmer            Float?
+  geop            String?
+  pmermin         String?
+  ff              String?
+  dd              String?
+  fxi             String?
+  dxi             String?
+  hxi             String?
+  fxy             String?
+  dxy             String?
+  hxy             String?
+  n               String?
+  nbas            String?
+  cl              String?
+  cm              String?
+  ch              String?
+  c1              String?
+  c2              String?
+  c3              String?
+  c4              String?
+  vv              String?
+  ww              String?
+  sol             String?
+  solng           String?
+  uvIndice        String?
+  alti            Int?
+  b1              String?
+  b2              String?
+  b3              String?
+  b4              String?
+  chargeneige     String?
+  dd2             String?
+  dhumec          String?
+  dhumi40         String?
+  dhumi80         String?
+  dif             String?
+  dif2            String?
+  dir             String?
+  dir2            String?
+  dirhoule        String?
+  dvv200          String?
+  dxi2            String?
+  ecoulement      String?
+  esneige         String?
+  etatmer         String?
+  ff2             String?
+  fxi2            String?
+  glo             String?
+  glo2            String?
+  hneigefi1       String?
+  hneigefi3       String?
+  hun             String?
+  hux             String?
+  hvague          String?
+  hxi2            String?
+  infrar          String?
+  infrar2         String?
+  ins2            String?
+  lat             String?
+  lon             String?
+  n1              String?
+  n2              String?
+  n3              String?
+  n4              String?
+  nomUsuel        String?
+  pvague          String?
+  tlagon          String?
+  tmer            String?
+  tsneige         String?
+  tsv             String?
+  tvegetaux       String?
+  u               String?
+  un              String?
+  uv              String?
+  uv2             String?
+  ux              String?
+  vvmer           String?
+  w1              String?
+  w2              String?
+  aaaammjjhh      Int?
+  qb1             String?
+  qb2             String?
+  qb3             String?
+  qb4             String?
+  qc1             String?
+  qc2             String?
+  qc3             String?
+  qc4             String?
+  qch             String?
+  qchargeneige    String?
+  qcl             String?
+  qcm             String?
+  qdd             String?
+  qdd2            String?
+  qdg             String?
+  qdhumec         String?
+  qdhumi40        String?
+  qdhumi80        String?
+  qdif            String?
+  qdif2           String?
+  qdir            String?
+  qdir2           String?
+  qdirhoule       String?
+  qdrr1           String?
+  qdvv200         String?
+  qdxi            String?
+  qdxi2           String?
+  qdxy            String?
+  qecoulement     String?
+  qesneige        String?
+  qetatmer        String?
+  qff             String?
+  qff2            String?
+  qfxi            String?
+  qfxi2           String?
+  qfxy            String?
+  qgeop           String?
+  qglo            String?
+  qglo2           String?
+  qhneigef        String?
+  qhneigefi1      String?
+  qhneigefi3      String?
+  qhtn            String?
+  qhtx            String?
+  qhun            String?
+  qhux            String?
+  qhvague         String?
+  qhxi            String?
+  qhxi2           String?
+  qhxy            String?
+  qinfrar         String?
+  qinfrar2        String?
+  qins            String?
+  qins2           String?
+  qn              String?
+  qn1             String?
+  qn2             String?
+  qn3             String?
+  qn4             String?
+  qnbas           String?
+  qneigetot       String?
+  qpmer           Int?
+  qpmermin        String?
+  qpstat          Int?
+  qpvague         String?
+  qrr1            String?
+  qsol            String?
+  qsolng          String?
+  qt              Int?
+  qt10            String?
+  qt100           String?
+  qt20            String?
+  qt50            String?
+  qtchaussee      String?
+  qtd             String?
+  qtlagon         String?
+  qtmer           String?
+  qtn             String?
+  qtn50           String?
+  qtnsol          String?
+  qtsneige        String?
+  qtsv            String?
+  qtubeneige      String?
+  qtvegetaux      String?
+  qtx             String?
+  qu              String?
+  qun             String?
+  quv             String?
+  quv2            String?
+  quvIndice       String?
+  qux             String?
+  qvv             String?
+  qvvmer          String?
+  qw1             String?
+  qw2             String?
+  qww             String?
+  tn              String?
+  tn50            String?
+  tnsol           String?
+  tubeneige       String?
+  tx              String?
+  dxi3S           String?
+  fxi3S           String?
+  hfxi3S          String?
+  qdxi3S          String?
+  qfxi3S          String?
+  qhfxi3S         String?
+  ins             String?
+
+  @@ignore
+}
+
+model staging_postes {
+  numPoste        String?   @db.Char(8)
+  nomUsuel        String?
+  commune         String?
+  lieuDit         String?
+  posteOuvert     Boolean?
+  alti            Int?
+  datferm         DateTime?
+  datouvr         DateTime?
+  lambx           Int?
+  lamby           Int?
+  lat             Float?
+  lon             Float?
+  typePosteActuel Int?
+
+  @@ignore
+}
