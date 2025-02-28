@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "dev": "tsx src/server.ts",
-    "build": "tsup src/server.ts",
+    "build": "npx prisma generate && tsup src/server.ts",
     "start": "node dist/server.js"
   },
   "keywords": [],

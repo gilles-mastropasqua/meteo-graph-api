@@ -10,9 +10,9 @@ const yoga = createYoga({
     schema,
     graphqlEndpoint: '/',
     graphiql: {
-        title: 'Météo-France GraphQL API',
+        title: 'MeteoGraph GraphQL API',
         defaultQuery: `
-# Welcome to the Météo-France GraphQL API!
+# Welcome to the MeteoGraph GraphQL API!
 #
 # This API provides access to meteorological data from Météo-France observation stations.
 #
@@ -45,6 +45,8 @@ const yoga = createYoga({
 # Use the "Docs" panel on the left to explore available types.
 # For more details, visit the official dataset documentation.
 # https://meteo.data.gouv.fr/datasets/6569b4473bedf2e7abad3b72
+# or 
+# https://github.com/gilles-mastropasqua/meteo-graph-api
     `,
     },
 });
