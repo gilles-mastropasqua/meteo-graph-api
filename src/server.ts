@@ -23,8 +23,6 @@ const yoga = createYoga({
 # Example Query:
 
 {
-  countObservationHoraire
-  countPoste
   findUniquePoste(where: {numPoste: "10099002"}) {
     numPoste
     nomUsuel
