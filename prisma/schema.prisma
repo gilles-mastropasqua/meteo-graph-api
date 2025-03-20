@@ -85,10 +85,10 @@ model ObservationHoraire {
   /// Duration of the precipitation (in minutes).
   drr1 String?
 
-  /// Height of the fresh snow (in cm).
+  /// Fresh snowfall height in 6 hours, always reported at the main synoptic hours (in cm).
   hneigef String?
 
-  /// Total snow depth (in cm).
+  /// Total snow depth on the ground (in cm).
   neigetot String?
 
   /// Air temperature at the time of observation (in °C).
@@ -97,10 +97,10 @@ model ObservationHoraire {
   /// Dew point temperature (in °C).
   td String?
 
-  /// Minimum humidity recorded (in %).
+  /// Hour of minimal temperature within the hour.
   htn String?
 
-  /// Maximum humidity recorded (in %).
+  /// Hour of maximal temperature within the hour.
   htx String?
 
   /// Wind direction (in degrees, from 0 to 360).
@@ -490,10 +490,10 @@ model ObservationHoraire {
   /// Quality indicator for snow height at third fixed interval.
   qhneigefi3 String?
 
-  /// Quality indicator for minimum humidity recorded.
+  /// Quality indicator for hour of minimal temperature within the hour.
   qhtn String?
 
-  /// Quality indicator for maximum humidity recorded.
+  /// Quality indicator for hour of maximal temperature within the hour.
   qhtx String?
 
   /// Quality indicator for minimum relative humidity.
@@ -595,7 +595,7 @@ model ObservationHoraire {
   /// Quality indicator for sea surface temperature.
   qtmer String?
 
-  /// Quality indicator for minimum temperature recorded.
+  /// Quality indicator for minimum temperature within the hour (in °C and 1/10).
   qtn String?
 
   /// Quality indicator for minimum temperature recorded at 50 cm depth.
@@ -616,7 +616,7 @@ model ObservationHoraire {
   /// Quality indicator for vegetation temperature.
   qtvegetaux String?
 
-  /// Quality indicator for maximum temperature recorded.
+  /// Quality indicator for maximum temperature within the hour (in °C and 1/10).
   qtx String?
 
   /// Quality indicator for relative humidity.
@@ -652,7 +652,7 @@ model ObservationHoraire {
   /// Quality indicator for present weather conditions.
   qww String?
 
-  /// Minimum temperature recorded.
+  /// Minimum temperature within the hour (in °C and 1/10).
   tn String?
 
   /// Minimum temperature recorded at 50 cm depth.
@@ -664,7 +664,7 @@ model ObservationHoraire {
   /// Snow tube temperature.
   tubeneige String?
 
-  /// Maximum temperature recorded.
+  /// Maximum temperature within the hour (in °C and 1/10).
   tx String?
 
   /// Direction of third highest wind speed recorded.
